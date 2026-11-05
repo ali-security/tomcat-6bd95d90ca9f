@@ -31,4 +31,7 @@ RC=$?
         done
     fi
 } > test-failures.log
+# Sealed build: print per-suite results, every skip with its reason and the
+# per-connector totals, since Ant's own output only goes to ant-test.log.
+python3 .travis/testSummary.py output/build/logs
 exit $RC
