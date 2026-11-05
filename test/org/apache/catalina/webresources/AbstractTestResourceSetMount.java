@@ -17,6 +17,7 @@
 package org.apache.catalina.webresources;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.util.Set;
 
@@ -66,6 +67,56 @@ public abstract class AbstractTestResourceSetMount
     public void testWriteAbove() {
         InputStream is = new ByteArrayInputStream("test".getBytes());
         Assert.assertFalse(resourceRoot.write("/", is, false));
+    }
+
+    /*
+     * Paths that start with the mount point as a string prefix but that are
+     * not located below the mount point (e.g. /mountf1.txt for /mount) must
+     * not be mapped to the content of the mounted resources.
+     */
+    @Test
+    public final void testGetResourceMountPrefixFile() {
+        WebResource webResource = resourceRoot.getResource(getMount() + "f1.txt");
+        Assert.assertFalse(webResource.exists());
+        Assert.assertEquals(getMount() + "f1.txt", webResource.getWebappPath());
+        Assert.assertNull(webResource.getInputStream());
+    }
+
+    @Test
+    public final void testGetResourceMountPrefixFileInDir() {
+        WebResource webResource = resourceRoot.getResource(getMount() + "d1/d1-f1.txt");
+        Assert.assertFalse(webResource.exists());
+        Assert.assertNull(webResource.getInputStream());
+    }
+
+    @Test
+    public final void testListMountPrefix() {
+        String[] results = resourceRoot.list(getMount() + "d1");
+
+        Assert.assertNotNull(results);
+        Assert.assertEquals(0, results.length);
+    }
+
+    @Test
+    public final void testListWebAppPathsMountPrefix() {
+        Set<String> results = resourceRoot.listWebAppPaths(getMount() + "d1/");
+
+        Assert.assertNull(results);
+    }
+
+    @Test
+    public void testMkdirMountPrefix() {
+        String newDirName = getNewDirName() + "-prefix";
+        Assert.assertFalse(resourceRoot.mkdir(getMount() + newDirName));
+        Assert.assertFalse(new File(getBaseDir(), newDirName).exists());
+    }
+
+    @Test
+    public void testWriteMountPrefix() {
+        String newFileName = getNewFileName() + "-prefix";
+        InputStream is = new ByteArrayInputStream("test".getBytes());
+        Assert.assertFalse(resourceRoot.write(getMount() + newFileName, is, false));
+        Assert.assertFalse(new File(getBaseDir(), newFileName).exists());
     }
 
     @Override
